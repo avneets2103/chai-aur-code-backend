@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
-import {User} from "../models/user.model.js";
-import {cloudinaryUploader} from "../utils/cloudinary.js"
+import { User } from "../models/user.model.js";
+import { cloudinaryUploader } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/apiResponse.js";
 
 const registerUser = asyncHandler(async (req, res)=>{
@@ -29,13 +29,14 @@ const registerUser = asyncHandler(async (req, res)=>{
         throw new ApiError(400, "Enter password");
     }
 
-    const existingUser = User.findOne({
+    const existingUser = await User.findOne({
         $or: [{username}, {email}]
     })
     if(existingUser){
         throw new ApiError(409, "Username or email already exsists");
     }
 
+    // we are getting the key of files in the req, as we are using multer
     const avatarLocalPath = req.files?.avatar[0]?.path
     const coverImageLocalPath = req.files?.coverImage[0].path
 
@@ -43,19 +44,17 @@ const registerUser = asyncHandler(async (req, res)=>{
         throw new ApiError(400, "Avatar required");
     }
     const avatar = await cloudinaryUploader(avatarLocalPath);
-    const coverImage = await  cloudinaryUploader(coverImageLocalPath);
-
+    const coverImage = await cloudinaryUploader(coverImageLocalPath);
     if(!avatar){throw new ApiError(400, "Avatar error");}
-
-    const user = await User.create({
-        fullName,
+    const newUser = {
+        fullName: fullName,
         avatar: avatar.url,
-        converImage: coverImage?.url || "",
-        email,
-        password,
-        username,
-    })
-
+        coverImage: coverImage.url || "",
+        email: email,
+        password: password,
+        username: username,
+    };
+    const user = await User.create(newUser);
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
@@ -63,8 +62,8 @@ const registerUser = asyncHandler(async (req, res)=>{
     if(!createdUser){
         throw new ApiError(500, "Something went wrong");
     }
-
-    return res.status(201).json(new ApiResponse(200, createdUser, message="User register Success"));
+    console.log("Works till here");
+    return res.status(201).json(new ApiResponse(200, createdUser, "User register Success"));
 })
 
 export {registerUser}

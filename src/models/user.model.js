@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
         type: String, // cloudnary url
         required: true,
     },
-    coverimage:{
+    coverImage:{
         type: String, // cloudnary url
     },
     watchHistory:[
@@ -44,7 +44,7 @@ const userSchema = new mongoose.Schema({
     refreshToken:{
         type: String,
     }
-}, {timestamps:True});
+}, {timestamps:true});
 
 userSchema.pre("save", async function (next){
     if(this.isModified("password")){
